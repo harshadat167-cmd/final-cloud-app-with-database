@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ course.name }}</title>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">
+            Home
+        </a>
+
+        <div>
+            {% if user.is_authenticated %}
+                <span>{{ user.first_name }} ({{ user.username }})</span>
+                <a class="btn btn-link"
+                   href="{% url 'onlinecourse:logout' %}">Logout</a>
+            {% else %}
+                <a class="btn btn-link"
+                   href="{% url 'onlinecourse:login' %}">Login</a>
+                <a class="btn btn-link"
+                   href="{% url 'onlinecourse:registration' %}">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>{{ course.name }}</h2>
+        <p>{{ course.description }}</p>
+
+        <h4 class="mt-4">Course Lessons</h4>
+
+        {% for lesson in course.lesson_set.all %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>
+                        Lesson {{ lesson.order|add:1 }}: {{ lesson.title }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{ lesson.content }}
+                </div>
+            </div>
+        {% empty %}
+            <p>No lessons available yet.</p>
+        {% endfor %}
+
+        {% if user.is_authenticated %}
+            {% if course.is_enrolled %}
+                <h3 class="mt-5">Course Exam</h3>
+                <p>Select the correct answer or answers for each question.</p>
+
+                <form id="questionform"
+                      action="{% url 'onlinecourse:submit' course.id %}"
+                      method="post">
+                    {% csrf_token %}
+
+                    {% for lesson in course.lesson_set.all %}
+                        {% for question in lesson.question_set.all %}
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <strong>{{ forloop.counter }}.
+                                        {{ question.question_text }}
+                                    </strong>
+                                    <span class="badge badge-secondary">
+                                        {{ question.grade }} point(s)
+                                    </span>
+                                </div>
+
+                                <div class="card-body">
+                                    {% for choice in question.choice_set.all %}
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <input
+                                                    type="checkbox"
+                                                    name="choice_{{ choice.id }}"
+                                                    id="choice_{{ choice.id }}"
+                                                    value="{{ choice.id }}"
+                                                    class="form-check-input">
+                                                {{ choice.choice_text }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-success btn-block mt-4 mb-5">
+                        Submit Exam
+                    </button>
+                </form>
+            {% else %}
+                <div class="alert alert-info mt-4">
+                    Please enroll in this course to take the exam.
+                    <a href="{% url 'onlinecourse:enroll' course.id %}">
+                        Enroll now
+                    </a>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info mt-4">
+                Please log in and enroll in this course to take the exam.
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

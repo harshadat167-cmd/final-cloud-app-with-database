@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Exam Results - {{ course.name }}</title>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">
+            Home
+        </a>
+        <div>
+            {% if user.is_authenticated %}
+                <span>{{ user.username }}</span>
+                <a class="btn btn-link"
+                   href="{% url 'onlinecourse:logout' %}">Logout</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <h2>{{ course.name }} — Exam Results</h2>
+
+        {% if grade > 80 %}
+            <div class="alert alert-success">
+                <h4>Congratulations!</h4>
+                You passed the exam.
+            </div>
+        {% else %}
+            <div class="alert alert-danger">
+                <h4>Keep practicing!</h4>
+                You did not pass this time. Review your answers and try again.
+            </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4>Your Score: {{ grade|floatformat:2 }}%</h4>
+                <p>
+                    Points earned: {{ total_score }} /
+                    {{ total_possible }}
+                </p>
+            </div>
+        </div>
+
+        <h4>Question-by-question results</h4>
+
+        {% for result in results %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <strong>{{ forloop.counter }}.
+                        {{ result.question.question_text }}
+                    </strong>
+
+                    {% if result.is_correct %}
+                        <span class="badge badge-success">Correct</span>
+                    {% else %}
+                        <span class="badge badge-danger">Incorrect</span>
+                    {% endif %}
+                </div>
+
+                <div class="card-body">
+                    <p>
+                        <strong>Points:</strong>
+                        {% if result.is_correct %}
+                            {{ result.question.grade }}
+                        {% else %}
+                            0
+                        {% endif %}
+                        / {{ result.question.grade }}
+                    </p>
+
+                    <p><strong>Your answers:</strong></p>
+                    <ul>
+                        {% for choice in result.choices %}
+                            {% if choice.id in result.selected_ids %}
+                                <li>{{ choice.choice_text }}</li>
+                            {% endif %}
+                        {% empty %}
+                            <li>No choices available.</li>
+                        {% endfor %}
+                    </ul>
+
+                    <p><strong>Correct answers:</strong></p>
+                    <ul>
+                        {% for choice in result.choices %}
+                            {% if choice.id in result.correct_ids %}
+                                <li>{{ choice.choice_text }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% empty %}
+            <p>No exam questions have been added to this course yet.</p>
+        {% endfor %}
+
+        <a class="btn btn-primary mt-4"
+           href="{% url 'onlinecourse:course_details' course.id %}">
+            Return to Course
+        </a>
+    </div>
+</body>
+</html>
